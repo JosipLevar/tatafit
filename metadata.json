@@ -1,0 +1,6 @@
+{
+  "name": "TataFit - Trening & Oporavak za Tate",
+  "description": "Dnevni adaptivni treninzi, dinamička progresija i obavezna rehabilitacija leđa prilagođena novopečenom tati i spondiloartritisu.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
