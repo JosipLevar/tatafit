@@ -8,11 +8,12 @@ import { BadgesLocker } from './components/BadgesLocker';
 import { ProgressionStats } from './components/ProgressionStats';
 import { DadGuideModal } from './components/DadGuideModal';
 import { AiCoachBox } from './components/AiCoachBox';
+import { IntervalTimerModal } from './components/IntervalTimerModal';
 
-import { DailyWorkout, ExerciseItem, UserProgression, WorkoutLog, Badge, WorkoutType } from './types/workout';
+import { DailyWorkout, ExerciseItem, UserProgression, WorkoutLog, Badge, WorkoutType, ExerciseReplacement } from './types/workout';
 import { BACK_WORKOUT_TEMPLATE, getWorkoutDatabase } from './data/workouts';
 import { getZagrebDateString } from './utils/dateUtils';
-import { generateDailyWorkout, hasCompletedBackRoutineThisWeek } from './utils/dailyWorkoutGenerator';
+import { generateDailyWorkout, hasCompletedBackRoutineThisWeek, getDaysSinceLastBackWorkout } from './utils/dailyWorkoutGenerator';
 import { 
   loadProgression, 
   saveProgression, 
@@ -32,12 +33,15 @@ export default function App() {
   const [todayState, setTodayState] = useState(loadTodayState(currentDateStr));
   const [activeTab, setActiveTab] = useState<NavTab>('daily');
   const [customWorkoutSwap, setCustomWorkoutSwap] = useState<WorkoutType | null>(null);
+  const [isViewingBackRoutine, setIsViewingBackRoutine] = useState<boolean>(false);
+  const [exerciseReplacements, setExerciseReplacements] = useState<Record<string, ExerciseItem>>({});
 
   // Modals
   const [selectedExercise, setSelectedExercise] = useState<ExerciseItem | null>(null);
   const [isExerciseModalOpen, setIsExerciseModalOpen] = useState<boolean>(false);
   const [isCompletionModalOpen, setIsCompletionModalOpen] = useState<boolean>(false);
   const [isDadGuideOpen, setIsDadGuideOpen] = useState<boolean>(false);
+  const [isTimerModalOpen, setIsTimerModalOpen] = useState<boolean>(false);
   const [unlockedBadgeBanner, setUnlockedBadgeBanner] = useState<Badge | null>(null);
 
   // Periodically check if date changed (at midnight Zagreb time)
@@ -48,6 +52,8 @@ export default function App() {
         setCurrentDateStr(freshDate);
         setTodayState(loadTodayState(freshDate));
         setCustomWorkoutSwap(null);
+        setExerciseReplacements({});
+        setIsViewingBackRoutine(false);
       }
     }, 10000);
     return () => clearInterval(interval);
@@ -55,24 +61,85 @@ export default function App() {
 
   // Base generated workout for Zagreb date
   const generatedWorkout = generateDailyWorkout(currentDateStr, progression, workoutLogs);
+  const backWorkoutStatus = getDaysSinceLastBackWorkout(currentDateStr, workoutLogs);
   const hasBackRoutineThisWeek = hasCompletedBackRoutineThisWeek(currentDateStr, workoutLogs);
 
-  // Allow dynamic AI Coach swap if user is sore/inflamed
+  // Allow dynamic AI Coach swap or manual switch to back routine
   const getActiveWorkout = (): DailyWorkout => {
-    if (activeTab === 'back') {
-      return { ...BACK_WORKOUT_TEMPLATE, dateKey: currentDateStr };
-    }
-    if (customWorkoutSwap) {
+    let baseWorkout: DailyWorkout;
+    if (isViewingBackRoutine) {
+      baseWorkout = {
+        ...BACK_WORKOUT_TEMPLATE,
+        dateKey: currentDateStr,
+        id: `${BACK_WORKOUT_TEMPLATE.id}_${currentDateStr}`,
+      };
+    } else if (customWorkoutSwap) {
       const db = getWorkoutDatabase(progression);
       const swapped = db.find(w => w.type === customWorkoutSwap) || generatedWorkout;
-      return {
+      baseWorkout = {
         ...swapped,
         dateKey: currentDateStr,
         title: `${swapped.title} (AI Prilagođeno)`,
         description: `⚡ Na temelju AI konzultacija, današnji trening je prilagođen tvom stanju: ${swapped.description}`,
       };
+    } else {
+      baseWorkout = generatedWorkout;
     }
-    return generatedWorkout;
+
+    // Apply any exercise replacements
+    if (Object.keys(exerciseReplacements).length > 0) {
+      const updatedExercises = baseWorkout.exercises.map(ex => {
+        if (exerciseReplacements[ex.id]) {
+          return exerciseReplacements[ex.id];
+        }
+        return ex;
+      });
+
+      const updatedSections = baseWorkout.sections?.map(sec => ({
+        ...sec,
+        exercises: sec.exercises.map(ex => {
+          if (exerciseReplacements[ex.id]) {
+            return exerciseReplacements[ex.id];
+          }
+          return ex;
+        })
+      }));
+
+      return {
+        ...baseWorkout,
+        exercises: updatedExercises,
+        sections: updatedSections,
+      };
+    }
+
+    return baseWorkout;
+  };
+
+  const handleApplyExerciseReplacement = (replacement: ExerciseReplacement) => {
+    setExerciseReplacements(prev => ({
+      ...prev,
+      [replacement.originalExerciseId]: replacement.replacementExercise,
+    }));
+  };
+
+  const handleManualSwapExercise = (original: ExerciseItem, replacement: ExerciseItem) => {
+    setExerciseReplacements(prev => ({
+      ...prev,
+      [original.id]: replacement,
+    }));
+  };
+
+  const handleResetExercise = (exerciseId: string) => {
+    setExerciseReplacements(prev => {
+      const copy = { ...prev };
+      delete copy[exerciseId];
+      for (const [origId, repEx] of Object.entries(copy)) {
+        if (repEx.id === exerciseId) {
+          delete copy[origId];
+        }
+      }
+      return copy;
+    });
   };
 
   const displayedWorkout = getActiveWorkout();
@@ -89,6 +156,27 @@ export default function App() {
     const updatedIds = isDone
       ? todayState.completedExerciseIds.filter(id => id !== exId)
       : [...todayState.completedExerciseIds, exId];
+
+    const newState = {
+      ...todayState,
+      dateKey: currentDateStr,
+      completedExerciseIds: updatedIds,
+    };
+    setTodayState(newState);
+    saveTodayState(newState);
+  };
+
+  const handleCompleteSection = (exerciseIds: string[], targetState: boolean) => {
+    let updatedIds = [...todayState.completedExerciseIds];
+    if (targetState) {
+      exerciseIds.forEach(id => {
+        if (!updatedIds.includes(id)) {
+          updatedIds.push(id);
+        }
+      });
+    } else {
+      updatedIds = updatedIds.filter(id => !exerciseIds.includes(id));
+    }
 
     const newState = {
       ...todayState,
@@ -259,6 +347,13 @@ export default function App() {
               <AiCoachBox
                 onApplyWorkoutSwap={type => setCustomWorkoutSwap(type)}
                 currentStreak={progression.currentStreak}
+                currentWorkout={{
+                  id: displayedWorkout.id,
+                  title: displayedWorkout.title,
+                  exercises: displayedWorkout.exercises,
+                }}
+                onApplyExerciseReplacement={handleApplyExerciseReplacement}
+                hasAppliedReplacement={Object.keys(exerciseReplacements).length > 0}
               />
             )}
 
@@ -276,58 +371,26 @@ export default function App() {
               isDadMode={progression.preferences.dadMode}
               isWorkoutAlreadyLogged={isCurrentWorkoutAlreadyLogged}
               todayLog={todayLog}
-              onSwitchToBackRoutine={() => setActiveTab('back')}
+              onSwitchToBackRoutine={() => setIsViewingBackRoutine(true)}
+              onSwitchBackToDaily={() => setIsViewingBackRoutine(false)}
+              isViewingBackRoutine={isViewingBackRoutine}
+              backWorkoutStatus={backWorkoutStatus}
               hasBackRoutineThisWeek={hasBackRoutineThisWeek}
+              onOpenTimer={() => setIsTimerModalOpen(true)}
+              onCompleteSection={handleCompleteSection}
+              onSwapExercise={handleManualSwapExercise}
+              onResetExercise={handleResetExercise}
+              exerciseReplacements={exerciseReplacements}
             />
           </div>
         )}
 
-        {/* Tab 2: Mandatory Back Routine */}
-        {activeTab === 'back' && (
-          <div className="space-y-4">
-            <div className="bg-emerald-950/40 border border-emerald-500/40 rounded-3xl p-5 flex items-center justify-between gap-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
-                  <ShieldCheck className="w-6 h-6" />
-                </div>
-                <div>
-                  <h2 className="text-lg font-bold text-white">
-                    Obavezni Protokol za Leđa (Spondiloartritis)
-                  </h2>
-                  <p className="text-xs text-emerald-300">
-                    {hasBackRoutineThisWeek
-                      ? '✓ Već si odradio protokol leđa ovaj tjedan! Bravo!'
-                      : '⚠️ Potrebno odraditi barem 1x tjedno za dekompresiju kralježnice.'}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <DailyWorkoutCard
-              workout={displayedWorkout}
-              completedExerciseIds={todayState.completedExerciseIds}
-              exerciseReps={todayState.exerciseReps}
-              onSelectExercise={ex => {
-                setSelectedExercise(ex);
-                setIsExerciseModalOpen(true);
-              }}
-              onToggleExercise={handleToggleExercise}
-              onCompleteWorkout={() => setIsCompletionModalOpen(true)}
-              onSkipWorkout={handleSkipWorkout}
-              isDadMode={progression.preferences.dadMode}
-              isWorkoutAlreadyLogged={isCurrentWorkoutAlreadyLogged}
-              todayLog={todayLog}
-              hasBackRoutineThisWeek={true}
-            />
-          </div>
-        )}
-
-        {/* Tab 3: Badges */}
+        {/* Tab 2: Badges */}
         {activeTab === 'badges' && (
           <BadgesLocker badges={badges} progression={progression} />
         )}
 
-        {/* Tab 4: History & Integrated Dad Guide */}
+        {/* Tab 3: History & Integrated Dad Guide */}
         {activeTab === 'history' && (
           <ProgressionStats
             progression={progression}
@@ -366,6 +429,12 @@ export default function App() {
       <DadGuideModal
         isOpen={isDadGuideOpen}
         onClose={() => setIsDadGuideOpen(false)}
+      />
+
+      <IntervalTimerModal
+        isOpen={isTimerModalOpen}
+        onClose={() => setIsTimerModalOpen(false)}
+        initialMode={displayedWorkout.type === 'emom' ? 'emom' : displayedWorkout.type === 'shadow_boxing' ? 'rounds' : 'emom'}
       />
     </div>
   );

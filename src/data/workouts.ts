@@ -169,11 +169,236 @@ export function getWorkoutDatabase(progression: {
   // Ako je kardio nivo visok zbog npr. Shadow Boxinga, trčanje automatski preskače 1.0 km i skače na 1.3 km ili 1.6 km!
   const runDistCalculated = Math.max(progression.runningDistanceKm || 1.0, 1.0 + (cardioLvl - 1) * 0.3);
 
-  const basePushupsReps = 8 + pLevel * 2;
-  const baseSquatReps = 12 + pLevel * 3;
+  const shadowBoxingEx: ExerciseItem[] = [
+    {
+      id: 'sb_round_1',
+      name: 'Runda 1: Jab-Cross + Pivot kretanje (3 min)',
+      croatianName: 'Runda 1: Osnovne kombinacije s rotacijom zdjelice',
+      sets: 1,
+      reps: '3 minute',
+      targetCount: 180,
+      isTimed: true,
+      durationSeconds: 180,
+      tempo: 'Lagan borilački ritam',
+      restSeconds: 60,
+      description: 'Kreći se na prednjem dijelu stopala. Izbacuj opuštene zadate kombinacije (Jab-Cross, Jab-Cross-Hook) naglašavajući rotaciju stražnjeg kuka i peta.',
+      backFriendlyTip: 'Snaga udarca dolazi iz kuka i rotacije zdjelice, a ne uvijanjem slabinskog dijela leđa.',
+      targetMuscles: ['Deltoidi', 'Kosi trbušni mišići', 'Gležnjevi', 'Kardio']
+    },
+    {
+      id: 'sb_round_2',
+      name: 'Runda 2: Slip & Weave kretanje glave (3 min)',
+      croatianName: 'Runda 2: Izmak glave s radom nogu i kvadricepsa',
+      sets: 1,
+      reps: '3 minute',
+      targetCount: 180,
+      isTimed: true,
+      durationSeconds: 180,
+      tempo: 'Ritmičko savijanje u koljenima',
+      restSeconds: 60,
+      description: 'Zamisli da ti udarac ide prema glavi. Radi blage izmake s podignutim prsima i stisnutim donjim trbuhom.',
+      backFriendlyTip: 'Zavlači se savijanjem u koljenima i kukovima, a ne savijanjem u struku.',
+      targetMuscles: ['Kvadriceps', 'Trup', 'Kardio']
+    },
+    {
+      id: 'sb_round_3',
+      name: 'Runda 3: Takedown Defense Sprawl simulator (3 min)',
+      croatianName: 'Runda 3: BJJ obrana od rušenja u zraku',
+      sets: 1,
+      reps: '3 minute',
+      targetCount: 180,
+      isTimed: true,
+      durationSeconds: 180,
+      tempo: 'Eksplozivni ulazi',
+      restSeconds: 60,
+      description: 'Kombiniraj udarce u zraku i svake 20 sekundi napravi brz udarac kukovima unazad u zrak (zračni sprawl) bez pada na pod.',
+      backFriendlyTip: 'Zadrži gluteus zategnut u najnižoj točki sprawla.',
+      targetMuscles: ['Gluteus', 'Pregibači kuka', 'Kardio']
+    },
+    {
+      id: 'sb_round_4_5',
+      name: 'Runde 4 & 5: Puni Shadow Flow & Disanje (6 min)',
+      croatianName: 'Runde 4 & 5: Puni slobodni flow s disanjem',
+      sets: 2,
+      reps: '3 minute po rundi',
+      targetCount: 360,
+      isTimed: true,
+      durationSeconds: 360,
+      tempo: 'Slobodan ritam',
+      restSeconds: 60,
+      description: 'Spoji sve pokrete: udarci, slipping, rotacija i rad nogu s dubokim nasalnim disanjem.',
+      backFriendlyTip: 'Opuštena ramena drže vratnu kralježnicu bez ukočenosti.',
+      targetMuscles: ['Cijelo tijelo', 'Kardiovaskularni sustav']
+    }
+  ];
+
+  // 1. EMOM EXERCISES (Every Minute on the Minute - Format B)
+  const emomExercises: ExerciseItem[] = [
+    {
+      id: 'emom_pushups_minute',
+      name: 'Minuta 1: Sklekovi s povišenja / podni',
+      croatianName: 'Minuta 1: Sklekovi kontroliranog tempa (8-10 reps)',
+      sets: 4,
+      reps: '8-10 ponavljanja',
+      targetCount: 10,
+      tempo: '2s spuštanje, 1s izbačaj',
+      restSeconds: 0,
+      description: 'Na početku minute odradi 8-10 pravilnih sklekova. Ostatak minute do zvuka gonga koristi za odmor i disanje!',
+      backFriendlyTip: 'Stisni gluteuse i donji trbuh tako da lumbalni dio ne visi.',
+      targetMuscles: ['Prsa', 'Triceps', 'Prednje rame']
+    },
+    {
+      id: 'emom_stepup_minute',
+      name: 'Minuta 2: Reverse Step Up s kontrolom pete',
+      croatianName: 'Minuta 2: Reverse Step Up na stepenicu (10 po nozi)',
+      sets: 4,
+      reps: '10 po nozi',
+      targetCount: 20,
+      tempo: 'Lagano spuštanje pete',
+      restSeconds: 0,
+      description: 'Na početku 2. minute odradi 10 laganih step-upova unazad po nozi na pragu ili stepenici. Ostatak minute odmaraš.',
+      backFriendlyTip: 'Aktivira koljena i VMO stabilizator bez kompresije na diskove.',
+      targetMuscles: ['Kvadriceps', 'Gluteus', 'Koljena']
+    },
+    {
+      id: 'emom_deadbug_minute',
+      name: 'Minuta 3: Dead Bug s pritiskom dlanova o bedra',
+      croatianName: 'Minuta 3: Mrtvi kukac s aktivacijom trupa (12 reps)',
+      sets: 4,
+      reps: '12 ponavljanja',
+      targetCount: 12,
+      tempo: 'Sporo s 1s zadrške',
+      restSeconds: 0,
+      description: 'Na početku 3. minute lezi na leđa, zalijepi donji dio leđa za pod i napravi 12 izmjena Dead Buga. Ostatak minute odmaraš.',
+      backFriendlyTip: 'Zlatni standard za stabilnost sakroilijakalnog zgloba i kralježaka.',
+      targetMuscles: ['Transversus abdominis', 'Duboki trup']
+    },
+    {
+      id: 'emom_wallsit_minute',
+      name: 'Minuta 4: Zidni izdržaj (Wall Sit)',
+      croatianName: 'Minuta 4: Zidni čučanj pod 90° (35 sekundi)',
+      sets: 4,
+      reps: '35 sekundi rada',
+      targetCount: 35,
+      isTimed: true,
+      durationSeconds: 35,
+      tempo: 'Statika',
+      restSeconds: 25,
+      description: 'Zauzmi položaj uza zid pod 90°. Drži 35 sekundi, a preostalih 25 sekundi odmori prije sljedećeg kruga.',
+      backFriendlyTip: 'Zid nosi svu težinu kralježnice dok kvadricepsi i gluteus gore.',
+      targetMuscles: ['Kvadriceps', 'Gluteus']
+    }
+  ];
+
+  // 2. PYRAMID POWER EXERCISES (Format C: 1-2-3-4-5-4-3-2-1)
+  const pyramidExercises: ExerciseItem[] = [
+    {
+      id: 'pyramid_pushups',
+      name: 'Piramida sklekova (1-2-3-4-5-4-3-2-1)',
+      croatianName: 'Piramidalni sklekovi: Ukupno 25 ponavljanja u 9 serija',
+      sets: 9,
+      reps: '1-2-3-4-5-4-3-2-1 (25 ukupno)',
+      targetCount: 25,
+      tempo: 'Puni opseg',
+      restSeconds: 30,
+      description: 'Odradi seriju od 1 ponavljanja, odmori 20s. Zatim 2, odmori 20s. Pa 3, 4, 5 na vrhu! Nakon vrha spuštaš se: 4, 3, 2, 1. Psihički nevjerojatno zabavno i motivirajuće.',
+      backFriendlyTip: 'Možeš raditi s rukama na kauču ako osjetiš umor trupa.',
+      targetMuscles: ['Prsa', 'Ramena', 'Trup']
+    },
+    {
+      id: 'pyramid_atg_squats',
+      name: 'Piramida ATG split čučnja (1-2-3-4-5-4-3-2-1)',
+      croatianName: 'Piramidalni iskorak s pokrivanjem lista (25 po nozi)',
+      sets: 9,
+      reps: '1-2-3-4-5-4-3-2-1 (25 po nozi)',
+      targetCount: 25,
+      tempo: 'Duboko spuštanje',
+      restSeconds: 30,
+      description: 'Isti piramidalni sustav za noge i otvaranje pregibača kuka. Uspon do 5 i silazak natrag do 1.',
+      backFriendlyTip: 'Dugotrajno istezanje psoasa smanjuje lumbalnu bol od dugog sjedenja uz bebu.',
+      targetMuscles: ['Kukovi', 'Zadnja loža', 'Kvadriceps']
+    },
+    {
+      id: 'pyramid_glute_bridge',
+      name: 'Piramida podizanja zdjelice (Glute Bridge)',
+      croatianName: 'Most za gluteus s 2s zadrške na vrhu (25 ponavljanja)',
+      sets: 9,
+      reps: '1-2-3-4-5-4-3-2-1 (25 ukupno)',
+      targetCount: 25,
+      tempo: '2s stisak na vrhu',
+      restSeconds: 20,
+      description: 'Lezi na leđa, stopala na podu. Podiži kukove stišćući gluteuse na vrhu bez prekomjernog uvijanja lumbalnih leđa.',
+      backFriendlyTip: 'Aktivira gluteus bez i najmanjeg aksijalnog pritiska.',
+      targetMuscles: ['Gluteus', 'Zadnja loža', 'Zdjelica']
+    }
+  ];
 
   return [
-    // 1. SHADOW BOXING 5x3 MIN (BJJ & Borilački Kardio - Pametno jača kardio kapacitet!)
+    // 1. EMOM 16 MIN (Format B - Novo & Zvučni intervali!)
+    {
+      id: 'emom_16min_dad_engine',
+      dateKey: '',
+      title: 'EMOM 16 Min: Trup & Noge protiv Štoperice',
+      type: 'emom',
+      typeLabel: 'EMOM Interval',
+      tagline: 'Svake minute nova runda (4 kruga x 4 min) uz zvučni timer',
+      durationMin: 16,
+      intensity: 'Umjeren',
+      level: pLevel,
+      isSplitFriendly: true,
+      isMandatoryBackRoutine: false,
+      description: 'Najbolji format protiv dosade! Svake minute odradiš zadani broj ponavljanja, a ostatak minute do zvučnog signala odmaraš. Četiri kruga po četiri minute – brzo prolazi, potiče fokus i nula aksijalnog stresa na kralježnicu.',
+      dadTip: 'Možeš pokrenuti ugrađeni EMOM timer u aplikaciji. Ako beba traži pažnju, podijeli trening na 2 sekcije po 8 minuta!',
+      exercises: emomExercises,
+      sections: [
+        {
+          id: 'sec_emom_1',
+          title: 'Sekcija 1: Krugovi 1 & 2 (8 minuta rada)',
+          recommendedTime: 'Jutro ili prvi odmor dok beba drijema',
+          exercises: emomExercises.slice(0, 2)
+        },
+        {
+          id: 'sec_emom_2',
+          title: 'Sekcija 2: Krugovi 3 & 4 (8 minuta rada)',
+          recommendedTime: 'Popodne ili predvečer',
+          exercises: emomExercises.slice(2)
+        }
+      ]
+    },
+
+    // 2. PIRAMIDA SNAGE (Format C - Novo & Ladder izazov!)
+    {
+      id: 'pyramid_power_ladder',
+      dateKey: '',
+      title: 'Piramida Snage: 1 do 5 i Natrag',
+      type: 'pyramid',
+      typeLabel: 'Piramida Snage',
+      tagline: 'Popni se do vrha (5 reps) i spusti se natrag uz 3 vježbe',
+      durationMin: 18,
+      intensity: 'Umjeren',
+      level: pLevel,
+      isSplitFriendly: true,
+      isMandatoryBackRoutine: false,
+      description: 'Mentalno iznimno zabavan format: radiš serije od 1, 2, 3, 4, 5, 4, 3, 2, 1 ponavljanje! Čim pređeš vrh (5 ponavljanja), svaka sljedeća serija je lakša i trening leti. Nema monotonije.',
+      dadTip: 'Nakon serije od 5 na vrhu piramide već si na pola puta! Možeš se popeti ujutro (1-5), a spustiti popodne (4-1).',
+      exercises: pyramidExercises,
+      sections: [
+        {
+          id: 'sec_pyr_1',
+          title: 'Sekcija 1: Uspon do vrha (Serije 1 do 5 - 10 min)',
+          recommendedTime: 'Jutarnji blok',
+          exercises: pyramidExercises.slice(0, 2)
+        },
+        {
+          id: 'sec_pyr_2',
+          title: 'Sekcija 2: Spuštanje s vrha & Gluteus (Serije 4 do 1 - 8 min)',
+          recommendedTime: 'Popodnevni blok',
+          exercises: pyramidExercises.slice(1)
+        }
+      ]
+    },
+
+    // 3. SHADOW BOXING 5x3 MIN (BJJ & Borilački Kardio)
     {
       id: 'shadow_boxing_fight_cardio',
       dateKey: '',
@@ -188,103 +413,144 @@ export function getWorkoutDatabase(progression: {
       isMandatoryBackRoutine: false,
       description: 'Zabavan borilački trening na tepihu bez pritiska na leđa! Rotacija kukova, rad nogu i udarci u zrak bilježe napredak u tvoj kardio kapacitet koji će preskočiti stepenicu za trčanje.',
       dadTip: 'Možeš odraditi 2 runde ujutro i 3 runde popodne ako beba traži pažnju.',
-      exercises: [
+      exercises: shadowBoxingEx,
+      sections: [
         {
-          id: 'sb_round_1',
-          name: 'Runda 1: Jab-Cross + Pivot kretanje (3 min)',
-          croatianName: 'Runda 1: Osnovne kombinacije s rotacijom zdjelice',
-          sets: 1,
-          reps: '3 minute',
-          targetCount: 180,
-          isTimed: true,
-          durationSeconds: 180,
-          tempo: 'Lagan borilački ritam',
-          restSeconds: 60,
-          description: 'Kreći se na prednjem dijelu stopala. Izbacuj opuštene zadate kombinacije (Jab-Cross, Jab-Cross-Hook) naglašavajući rotaciju stražnjeg kuka i peta.',
-          backFriendlyTip: 'Snaga udarca dolazi iz kuka i rotacije zdjelice, a ne uvijanjem slabinskog dijela leđa.',
-          targetMuscles: ['Deltoidi', 'Kosi trbušni mišići', 'Gležnjevi', 'Kardio']
+          id: 'sec_sb_1',
+          title: 'Sekcija 1: Runde 1 & 2 (Tehnika & rad nogu - 8 min)',
+          recommendedTime: 'Jutro ili prva pauza',
+          exercises: shadowBoxingEx.slice(0, 2)
         },
         {
-          id: 'sb_round_2',
-          name: 'Runda 2: Slip & Weave kretanje glave (3 min)',
-          croatianName: 'Runda 2: Izmak glave s radom nogu i kvadricepsa',
-          sets: 1,
-          reps: '3 minute',
-          targetCount: 180,
-          isTimed: true,
-          durationSeconds: 180,
-          tempo: 'Ritmičko savijanje u koljenima',
-          restSeconds: 60,
-          description: 'Zamisli da ti udarac ide prema glavi. Radi blage izmake s podignutim prsima i stisnutim donjim trbuhom.',
-          backFriendlyTip: 'Zavlači se savijanjem u koljenima i kukovima, a ne savijanjem u struku.',
-          targetMuscles: ['Kvadriceps', 'Trup', 'Kardio']
-        },
-        {
-          id: 'sb_round_3',
-          name: 'Runda 3: Takedown Defense Sprawl simulator (3 min)',
-          croatianName: 'Runda 3: BJJ obrana od rušenja u zraku',
-          sets: 1,
-          reps: '3 minute',
-          targetCount: 180,
-          isTimed: true,
-          durationSeconds: 180,
-          tempo: 'Eksplozivni ulazi',
-          restSeconds: 60,
-          description: 'Kombiniraj udarce u zraku i svake 20 sekundi napravi brz udarac kukovima unazad u zrak (zračni sprawl) bez pada na pod.',
-          backFriendlyTip: 'Zadrži gluteus zategnut u najnižoj točki sprawla.',
-          targetMuscles: ['Gluteus', 'Pregibači kuka', 'Kardio']
-        },
-        {
-          id: 'sb_round_4_5',
-          name: 'Runde 4 & 5: Puni Shadow Flow & Disanje (6 min)',
-          croatianName: 'Runde 4 & 5: Puni slobodni flow s disanjem',
-          sets: 2,
-          reps: '3 minute po rundi',
-          targetCount: 360,
-          isTimed: true,
-          durationSeconds: 360,
-          tempo: 'Slobodan ritam',
-          restSeconds: 60,
-          description: 'Spoji sve pokrete: udarci, slipping, rotacija i rad nogu s dubokim nasalnim disanjem.',
-          backFriendlyTip: 'Opuštena ramena drže vratnu kralježnicu bez ukočenosti.',
-          targetMuscles: ['Cijelo tijelo', 'Kardiovaskularni sustav']
+          id: 'sec_sb_2',
+          title: 'Sekcija 2: Runde 3, 4 & 5 (Sprawl obrana i flow - 12 min)',
+          recommendedTime: 'Popodne ili navečer',
+          exercises: shadowBoxingEx.slice(2)
         }
       ]
     },
 
-    // 2. DNEVNI IZAZOV: 10,000 KORAKA (Hodajući izazov s kolicima)
+    // 4. DNEVNI IZAZOV: 10,000 KORAKA (Hodajući izazov s kolicima)
     {
       id: 'walking_challenge_10k_steps',
       dateKey: '',
-      title: `Dnevni Izazov: ${stepsTarget.toLocaleString('hr-HR')} Koraka Danas`,
+      title: 'Dnevni Izazov: 10.000 Koraka Danas',
       type: 'walking_challenge',
       typeLabel: 'Hodajući Izazov',
-      tagline: 'Akumuliraj korake kroz dan uz šetnju s kolicima s bebom',
+      tagline: 'Akumuliraj 10.000 koraka kroz dan uz šetnju s kolicima s bebom',
       durationMin: 30,
       intensity: 'Lagan',
-      level: Math.round(stepsTarget / 2000),
+      level: 5,
       isSplitFriendly: true,
       isMandatoryBackRoutine: false,
-      description: `Hodanje je najbolji prirodni dekompresor kralježnice! Cilj je sakupiti ${stepsTarget.toLocaleString('hr-HR')} koraka do ponoći. Odradi dugu šetnju s kolicima na svježem zraku ili skupljaš korake kroz dan.`,
+      description: 'Hodanje je najbolji prirodni dekompresor kralježnice! Cilj je sakupiti 10.000 koraka do ponoći. Podijeljeno u 3 šetnje kroz dan ili akumulirano odjednom.',
       dadTip: 'Šetnja s bebinim kolicima u parku donosi dvostruku pobjedu: beba spava na svježem zraku, a tvoja leđa se dekomprimiraju.',
       exercises: [
         {
-          id: 'walk_steps_accumulator',
-          name: 'Dnevni koraci s kolicima ili u pokretu',
-          croatianName: 'Akumulirani dnevni koraci',
+          id: 'walk_morning',
+          name: 'Jutarnja šetnja s kolicima (4.000 koraka)',
+          croatianName: 'Jutarnja šetnja: 4.000 koraka uz kolica',
           sets: 1,
-          reps: `${stepsTarget.toLocaleString('hr-HR')} koraka`,
-          targetCount: stepsTarget,
+          reps: '4.000 koraka',
+          targetCount: 4000,
           tempo: 'Ujednačen tempo hoda',
           restSeconds: 0,
-          description: `Zabilježi korake sa svog sata ili mobitela. Pazi na uspravno držanje i prirodan zamah rukama pri hodu.`,
+          description: 'Prva jutarnja šetnja dok beba spava. Drži ramena opuštena i ne naginji se preko ručke kolica.',
           backFriendlyTip: 'Gazi s blagom aktivacijom gluteusa pri svakom odrivu stopala.',
-          targetMuscles: ['Listovi', 'Gluteus', 'Kralježnica', 'Opće zdravlje']
+          targetMuscles: ['Listovi', 'Gluteus', 'Kralježnica']
+        },
+        {
+          id: 'walk_afternoon',
+          name: 'Popodnevna šetnja parkom (4.000 koraka)',
+          croatianName: 'Popodnevna šetnja: 4.000 koraka',
+          sets: 1,
+          reps: '4.000 koraka',
+          targetCount: 4000,
+          tempo: 'Ujednačen tempo hoda',
+          restSeconds: 0,
+          description: 'Druga šetnja nakon popodnevnog odmora. Dekompresija lumbalne kralježnice kroz kontinuirani ritmički pokret.',
+          backFriendlyTip: 'Hodanje pumpa sinovijalnu tekućinu u diskove kralježnice i smanjuje upalu.',
+          targetMuscles: ['Listovi', 'Kukovi', 'Kralježnica']
+        },
+        {
+          id: 'walk_evening',
+          name: 'Večernji krug & uspavljivanje (2.000 koraka)',
+          croatianName: 'Večernji krug: 2.000 koraka',
+          sets: 1,
+          reps: '2.000 koraka',
+          targetCount: 2000,
+          tempo: 'Lagan opuštajući tempo',
+          restSeconds: 0,
+          description: 'Kratki večernji krug za uspavljivanje bebe i dosezanje punog dnevnog cilja od 10.000 koraka.',
+          backFriendlyTip: 'Uspravno držanje, lagani koraci bez udaranja petama o tvrdu podlogu.',
+          targetMuscles: ['Listovi', 'Opće zdravlje']
+        }
+      ],
+      sections: [
+        {
+          id: 'sec_walk_1',
+          title: 'Sekcija 1: Jutarnja šetnja kolicima (4.000 koraka)',
+          recommendedTime: 'Jutarnji svježi zrak dok beba spava',
+          exercises: [
+            {
+              id: 'walk_morning',
+              name: 'Jutarnja šetnja s kolicima (4.000 koraka)',
+              croatianName: 'Jutarnja šetnja: 4.000 koraka uz kolica',
+              sets: 1,
+              reps: '4.000 koraka',
+              targetCount: 4000,
+              tempo: 'Ujednačen tempo hoda',
+              restSeconds: 0,
+              description: 'Prva jutarnja šetnja dok beba spava. Drži ramena opuštena i ne naginji se preko ručke kolica.',
+              backFriendlyTip: 'Gazi s blagom aktivacijom gluteusa pri svakom odrivu stopala.',
+              targetMuscles: ['Listovi', 'Gluteus', 'Kralježnica']
+            }
+          ]
+        },
+        {
+          id: 'sec_walk_2',
+          title: 'Sekcija 2: Popodnevna šetnja parkom (4.000 koraka)',
+          recommendedTime: 'Popodne nakon hranjenja',
+          exercises: [
+            {
+              id: 'walk_afternoon',
+              name: 'Popodnevna šetnja parkom (4.000 koraka)',
+              croatianName: 'Popodnevna šetnja: 4.000 koraka',
+              sets: 1,
+              reps: '4.000 koraka',
+              targetCount: 4000,
+              tempo: 'Ujednačen tempo hoda',
+              restSeconds: 0,
+              description: 'Druga šetnja nakon popodnevnog odmora. Dekompresija lumbalne kralježnice kroz kontinuirani ritmički pokret.',
+              backFriendlyTip: 'Hodanje pumpa sinovijalnu tekućinu u diskove kralježnice i smanjuje upalu.',
+              targetMuscles: ['Listovi', 'Kukovi', 'Kralježnica']
+            }
+          ]
+        },
+        {
+          id: 'sec_walk_3',
+          title: 'Sekcija 3: Večernji krug & uspavljivanje (2.000 koraka)',
+          recommendedTime: 'Predvečer',
+          exercises: [
+            {
+              id: 'walk_evening',
+              name: 'Večernji krug & uspavljivanje (2.000 koraka)',
+              croatianName: 'Večernji krug: 2.000 koraka',
+              sets: 1,
+              reps: '2.000 koraka',
+              targetCount: 2000,
+              tempo: 'Lagan opuštajući tempo',
+              restSeconds: 0,
+              description: 'Kratki večernji krug za uspavljivanje bebe i dosezanje punog dnevnog cilja od 10.000 koraka.',
+              backFriendlyTip: 'Uspravno držanje, lagani koraci bez udaranja petama o tvrdu podlogu.',
+              targetMuscles: ['Listovi', 'Opće zdravlje']
+            }
+          ]
         }
       ]
     },
 
-    // 3. DNEVNI IZAZOV: 100 TRBUŠNJAKA & DEADBUG DEKOMPRESIJA
+    // 5. DNEVNI IZAZOV: 100 TRBUŠNJAKA & DEADBUG DEKOMPRESIJA
     {
       id: 'core_challenge_100_reps',
       dateKey: '',
@@ -316,7 +582,7 @@ export function getWorkoutDatabase(progression: {
       ]
     },
 
-    // 4. TRČANJE (PAMETNO PRESKAČE STEPENICU ako je kardio nivo visok!)
+    // 6. TRČANJE (PAMETNO PRESKAČE STEPENICU ako je kardio nivo visok!)
     {
       id: 'running_spine_friendly_intervals',
       dateKey: '',
@@ -360,7 +626,7 @@ export function getWorkoutDatabase(progression: {
       ]
     },
 
-    // 5. IZOMETRIJA
+    // 7. IZOMETRIJA
     {
       id: 'isometrics_wall_and_towel_power',
       dateKey: '',
@@ -421,57 +687,240 @@ export function getWorkoutDatabase(progression: {
           backFriendlyTip: 'Ogromna tenzija bez uvijanja leđa.',
           targetMuscles: ['Biceps', 'Podlaktice']
         }
+      ],
+      sections: [
+        {
+          id: 'sec_iso_1',
+          title: 'Sekcija 1: Noge & Donji dio (Wall Sit - 8 min)',
+          recommendedTime: 'Jutarnji odmor',
+          exercises: [
+            {
+              id: 'iso_wall_sit_40',
+              name: 'Wall sit (Zidni čučanj)',
+              croatianName: 'Zidni čučanj s leđima pritisnutim uz zid',
+              sets: 3,
+              reps: '40 sekundi',
+              targetCount: 40,
+              isTimed: true,
+              durationSeconds: 40,
+              tempo: 'Statika',
+              restSeconds: 45,
+              description: 'Spusti se u čučanj uz zid pod 90°. Pritisni donji dio leđa ravno uz zid.',
+              backFriendlyTip: 'Zid nosi težinu kralježnice.',
+              targetMuscles: ['Kvadriceps', 'Gluteus']
+            }
+          ]
+        },
+        {
+          id: 'sec_iso_2',
+          title: 'Sekcija 2: Gornji dio & Ručnik (Wall Push & Towel - 10 min)',
+          recommendedTime: 'Popodnevni odmor',
+          exercises: [
+            {
+              id: 'iso_wall_overhead_push',
+              name: 'Wall Overhead Push (Guranje zida prema gore)',
+              croatianName: 'Izometričko guranje zida dlanovima prema gore',
+              sets: 3,
+              reps: '40 sekundi',
+              targetCount: 40,
+              isTimed: true,
+              durationSeconds: 40,
+              tempo: 'Maksimalan pritisak prema gore',
+              restSeconds: 40,
+              description: 'Stani uz zid, pritisni dlanove o zid gurajući ravno prema gore.',
+              backFriendlyTip: 'Aktivira donji trapez i gornja leđa.',
+              targetMuscles: ['Donji trapez', 'Gornja leđa']
+            },
+            {
+              id: 'iso_towel_biceps_curl',
+              name: 'Towel Biceps Curl Isometric Hold',
+              croatianName: 'Vučenje ručnika u pozi biceps pregiba (pod 90°)',
+              sets: 3,
+              reps: '40 sekundi',
+              targetCount: 40,
+              isTimed: true,
+              durationSeconds: 40,
+              tempo: 'Povlačenje svom snagom',
+              restSeconds: 45,
+              description: 'Stani na ručnik, uhvati krajeve rukama pod 90° i vuci prema gore!',
+              backFriendlyTip: 'Ogromna tenzija bez uvijanja leđa.',
+              targetMuscles: ['Biceps', 'Podlaktice']
+            }
+          ]
+        }
       ]
     },
 
-    // 6. ANIMAL FLOW
+    // 8. ANIMAL FLOW & BJJ PRIMAL FLOW
     {
       id: 'animal_flow_primal_foundations',
       dateKey: '',
-      title: 'Animal Flow: Primal Pokreti & Trup',
+      title: 'Animal Flow: BJJ Primal Kretanje & Trup',
       type: 'animal_flow',
-      typeLabel: 'Animal Flow',
-      tagline: 'Beast hold, Crab reach & Scorpion rotacije',
-      durationMin: 18,
+      typeLabel: 'Animal Flow & BJJ',
+      tagline: 'Medvjed, Rakov most, BJJ Sit-out, Škorpion & Val kralježnice',
+      durationMin: 20,
       intensity: 'Umjeren',
       level: afLevel,
       isSplitFriendly: true,
       isMandatoryBackRoutine: false,
-      description: 'Primalni životinjski pokreti na podu bez ikakve opreme.',
-      dadTip: 'Radi na mekanom tepihu.',
+      description: 'Zabavni podni pokreti inspirirani životinjskim kretnjama i BJJ-om. Nula aksijalnog pritiska na diskove, a gradi stabilnost ramena, otvara ukočeni prsni koš i ublažava ukočenost od spondiloartritisa.',
+      dadTip: 'Radi bose noge na tepihu ili strunjači. Puni trening traje 20 min, a u Tata Modu je podijeljen u dvije lagane sekcije po 10 min!',
       exercises: [
         {
           id: 'af_beast_hold',
-          name: 'Beast Hold (Medvjeđi izdržaj)',
-          croatianName: 'Medvjeđi stav s koljenima 2 cm od poda',
+          name: 'Beast Hold (Medvjeđi stav s izdržajem)',
+          croatianName: 'Medvjeđi stav (koljena 2 cm od poda)',
           sets: 3,
           reps: '45 sekundi',
           targetCount: 45,
           isTimed: true,
           durationSeconds: 45,
-          tempo: 'Koljena 2cm od poda',
+          tempo: 'Stabilna statika',
           restSeconds: 30,
-          description: 'Odvoji koljena 2 cm od poda, stisni trbuh i diši mirno.',
-          backFriendlyTip: 'Donji dio leđa ostaje potpuno ravan.',
-          targetMuscles: ['Transversus abdominis', 'Ramena']
+          description: 'Spusti se na sve četiri: dlanovi točno ispod ramena, koljena ispod kukova pod 90°. Nožni prsti su na podu. Odvoji koljena za samo 2 cm od poda i zaledi položaj. Donji dio leđa je ravan poput stola, pupak blago uvučen.',
+          backFriendlyTip: 'Donji dio leđa ostaje potpuno neutralan – nema propadanja trbuha prema podu.',
+          targetMuscles: ['Transversus abdominis', 'Prednje rame', 'Kvadriceps']
         },
         {
           id: 'af_crab_reach',
-          name: 'Crab Reach (Rakov doseg s otvaranjem prsa)',
-          croatianName: 'Otvaranje prsnog koša u rakovom stavu',
+          name: 'Crab Reach (Rakov most s dijagonalnim otvaranjem)',
+          croatianName: 'Rakov most s otvaranjem prsnog koša i dosegom',
           sets: 3,
-          reps: '6 po strani',
+          reps: '6 po strani (12 ukupno)',
           targetCount: 12,
-          tempo: '3s zadrške na vrhu',
+          tempo: '3s zadrške u gornjem dosegu',
+          restSeconds: 35,
+          description: 'KAKO IZVESTI: 1. Počni u sjedećem stavu raka: stopala na podu u širini ramena, dlanovi iza tebe na podu, stražnjica tik iznad poda. 2. Za desnu stranu: podigni desni dlan s poda u gard ispred lica. 3. Stisni gluteuse i snažno izbaci kukove gore prema stropu (stvaraš stabilan most na lijevoj ruci i stopalima). 4. Desnu ruku pruži dijagonalno PREKO glave prema podu iza lijevog ramena, dok pogled usmjeravaš dolje u lijevi dlan na podu. Osjetit ćeš otvaranje prsa, ramena i cijelog prednjeg lanca. 5. Spusti kukove i ponovi na suprotnu stranu.',
+          backFriendlyTip: 'Ekstenzija dolazi iz torakalnog (prsnog) dijela kralježnice i gluteusa, bez prelamanja u donjim leđima.',
+          targetMuscles: ['Torakalni dio', 'Gluteus', 'Prednje rame', 'Kukovi']
+        },
+        {
+          id: 'af_side_kick_through',
+          name: 'Side Kick Through (BJJ Sit-out kretnja iz medvjeda)',
+          croatianName: 'BJJ Sit-out / Side Kick Through (iz medvjeđeg stava)',
+          sets: 3,
+          reps: '8 po strani (16 ukupno)',
+          targetCount: 16,
+          tempo: 'Kontrolirana rotacija',
           restSeconds: 40,
-          description: 'Podigni kukove visoko u rakovom stavu otvarajući prsa.',
-          backFriendlyTip: 'Otvara torakalnu kralježnicu.',
-          targetMuscles: ['Torakalni dio', 'Gluteus']
+          description: 'Poznata kretnja iz hrvanja i jiu-jitsua! Iz medvjeđeg stava podigni desnu ruku i lijevu nogu. Rotiraj se na desnom stopalu i provuci lijevu nogu ispod tijela u stranu (sit-out) tik iznad poda, dok desnu ruku povlačiš uz rebra kao gard. Zadrži na trenutak, vrati se u medvjeda i ponovi u drugu stranu.',
+          backFriendlyTip: 'Gradi bočni trup (obliques) i rotacijsku kontrolu bez savijanja kralježnice pod opterećenjem.',
+          targetMuscles: ['Bočni trbušni mišići', 'Ramena', 'Kukovi']
+        },
+        {
+          id: 'af_scorpion_reach',
+          name: 'Scorpion Reach (Škorpion dekompresija kralježnice)',
+          croatianName: 'Škorpion doseg za rasterećenje sakroilijakalnog zgloba',
+          sets: 3,
+          reps: '5 po strani (10 ukupno)',
+          targetCount: 10,
+          tempo: 'Duboko polagano disanje',
+          restSeconds: 35,
+          description: 'Iz položaja psa prema dolje ili čučećeg medvjeda, podigni jednu nogu visoko prema stropu, savij koljeno pod 90° i otvori kuk rotirajući petu preko tijela na suprotnu stranu. Glava ostaje opuštena između ruku. Osjetit ćeš duboko i ugodno istezanje kuka, bočnog trupa i latisimusa.',
+          backFriendlyTip: 'Ova lagana 3D rotacija kuka izuzetno godi SI zglobu i smanjuje ukočenost u donjim leđima.',
+          targetMuscles: ['Pregibači kuka', 'SI zglob', 'Latissimus']
+        },
+        {
+          id: 'af_beast_wave',
+          name: 'Loaded Beast to Wave (Dekompresijski val kralježnice)',
+          croatianName: 'Val kralježnice iz čučnja (Beast Wave)',
+          sets: 3,
+          reps: '6 punih valova',
+          targetCount: 6,
+          tempo: 'Segmentni val kralježak po kralježak',
+          restSeconds: 30,
+          description: 'Sjedni kukovima prema petama s ispruženim rukama naprijed na podu (loaded beast). Započni pokret podizanjem kukova, zaobli leđa i prenesi val kroz kralježnicu prema naprijed sve do visokog planka/kobre s podignutim pogledom. Vrati se istim fluidnim putem unazad.',
+          backFriendlyTip: 'Segmentno mobilizira svaki kralježak bez ikakvog vanjskog utega – vrhunska vježba za spondilitis.',
+          targetMuscles: ['Cijela kralježnica', 'Trup', 'Ramena']
+        }
+      ],
+      sections: [
+        {
+          id: 'sec_af_1',
+          title: 'Sekcija 1: Stabilnost & Otvaranje Prsa (Medvjed & Rakov most)',
+          recommendedTime: 'Jutro ili prva pauza (cca 10 min)',
+          exercises: [
+            {
+              id: 'af_beast_hold',
+              name: 'Beast Hold (Medvjeđi stav s izdržajem)',
+              croatianName: 'Medvjeđi stav (koljena 2 cm od poda)',
+              sets: 3,
+              reps: '45 sekundi',
+              targetCount: 45,
+              isTimed: true,
+              durationSeconds: 45,
+              tempo: 'Stabilna statika',
+              restSeconds: 30,
+              description: 'Spusti se na sve četiri: dlanovi točno ispod ramena, koljena ispod kukova pod 90°. Nožni prsti su na podu. Odvoji koljena za samo 2 cm od poda i zaledi položaj.',
+              backFriendlyTip: 'Donji dio leđa ostaje neutralan.',
+              targetMuscles: ['Transversus abdominis', 'Prednje rame', 'Kvadriceps']
+            },
+            {
+              id: 'af_crab_reach',
+              name: 'Crab Reach (Rakov most s dijagonalnim otvaranjem)',
+              croatianName: 'Rakov most s otvaranjem prsnog koša i dosegom',
+              sets: 3,
+              reps: '6 po strani (12 ukupno)',
+              targetCount: 12,
+              tempo: '3s zadrške u gornjem dosegu',
+              restSeconds: 35,
+              description: 'Iz sjedećeg raka stisni gluteuse, podigni kukove prema stropu, a jednom rukom posegni dijagonalno preko glave rotirajući prsa prema podu.',
+              backFriendlyTip: 'Ekstenzija dolazi iz torakalnog dijela kralježnice i gluteusa.',
+              targetMuscles: ['Torakalni dio', 'Gluteus', 'Prednje rame']
+            }
+          ]
+        },
+        {
+          id: 'sec_af_2',
+          title: 'Sekcija 2: BJJ Flow & Dekompresija (Sit-Out, Škorpion & Val)',
+          recommendedTime: 'Popodne ili predvečer (cca 10 min)',
+          exercises: [
+            {
+              id: 'af_side_kick_through',
+              name: 'Side Kick Through (BJJ Sit-out kretnja iz medvjeda)',
+              croatianName: 'BJJ Sit-out / Side Kick Through (iz medvjeđeg stava)',
+              sets: 3,
+              reps: '8 po strani (16 ukupno)',
+              targetCount: 16,
+              tempo: 'Kontrolirana rotacija',
+              restSeconds: 40,
+              description: 'Iz medvjeđeg stava podigni desnu ruku i lijevu nogu, rotiraj se i provuci lijevu nogu u stranu ispod tijela. Vrati se i ponovi na drugu stranu.',
+              backFriendlyTip: 'Gradi bočni trup bez savijanja kralježnice pod teretom.',
+              targetMuscles: ['Bočni trbušni mišići', 'Ramena', 'Kukovi']
+            },
+            {
+              id: 'af_scorpion_reach',
+              name: 'Scorpion Reach (Škorpion dekompresija kralježnice)',
+              croatianName: 'Škorpion doseg za rasterećenje sakroilijakalnog zgloba',
+              sets: 3,
+              reps: '5 po strani (10 ukupno)',
+              targetCount: 10,
+              tempo: 'Duboko polagano disanje',
+              restSeconds: 35,
+              description: 'Iz psa prema dolje podigni nogu gore, savij koljeno i rotiraj petu preko tijela.',
+              backFriendlyTip: 'Lagana rotacija kuka ugodno dekomprimira SI zglob.',
+              targetMuscles: ['Pregibači kuka', 'SI zglob', 'Latissimus']
+            },
+            {
+              id: 'af_beast_wave',
+              name: 'Loaded Beast to Wave (Dekompresijski val kralježnice)',
+              croatianName: 'Val kralježnice iz čučnja (Beast Wave)',
+              sets: 3,
+              reps: '6 punih valova',
+              targetCount: 6,
+              tempo: 'Segmentni val',
+              restSeconds: 30,
+              description: 'Prenesi val kroz kralježnicu iz čučnja prema naprijed u visoki plank/kobru i natrag.',
+              backFriendlyTip: 'Mobilizira kralješke bez opterećenja.',
+              targetMuscles: ['Cijela kralježnica', 'Trup', 'Ramena']
+            }
+          ]
         }
       ]
     },
 
-    // 7. DNEVNI IZAZOV: STOTKA SKLEKOVA
+    // 9. DNEVNI IZAZOV: STOTKA SKLEKOVA
     {
       id: 'challenge_pushup_centurion',
       dateKey: '',
@@ -504,3 +953,90 @@ export function getWorkoutDatabase(progression: {
     }
   ];
 }
+
+/**
+ * Returns safe alternative exercises when user has soreness, pain, or needs an adaptation
+ */
+export function getExerciseAlternatives(exercise: ExerciseItem): ExerciseItem[] {
+  const isPushOrChest = 
+    exercise.id.includes('pushup') || 
+    exercise.targetMuscles.includes('Prsa') || 
+    exercise.targetMuscles.includes('Triceps');
+
+  if (isPushOrChest) {
+    return [
+      {
+        id: `${exercise.id}_alt_plank`,
+        name: 'Plank izdržaj na podlakticama',
+        croatianName: 'Plank izdržaj na podlakticama (35-40 sekundi)',
+        sets: exercise.sets,
+        reps: '35-40 sekundi',
+        targetCount: 40,
+        isTimed: true,
+        durationSeconds: 40,
+        tempo: 'Čvrsta statika',
+        restSeconds: exercise.restSeconds,
+        description: 'Umjesto sklekova koji opterećuju upaljena prsa i ramena, odradi čvrst plank na podlakticama. Donji trbuh i gluteus su stisnuti, štiteći lumbalni dio.',
+        backFriendlyTip: 'Donja leđa moraju ostati u neutralnom položaju bez propadanja trbuha.',
+        targetMuscles: ['Transversus abdominis', 'Duboki trup']
+      },
+      {
+        id: `${exercise.id}_alt_tibialis`,
+        name: 'Tibialis Raise uz zid',
+        croatianName: 'Tibialis Raise uz zid (15 ponavljanja)',
+        sets: exercise.sets,
+        reps: '15 ponavljanja',
+        targetCount: 15,
+        tempo: '2s podizanje prstiju',
+        restSeconds: exercise.restSeconds,
+        description: 'Nasloni se leđima na zid, stopala 30 cm od zida. Podiži prste stopala što više prema potkoljenici. Potiče cirkulaciju i dekompresiju donjeg lanca.',
+        backFriendlyTip: 'Vrhunska vježba za koljena i kralježnicu koja potpuno odmara gornji dio tijela.',
+        targetMuscles: ['Tibialis anterior', 'Gležnjevi']
+      },
+      {
+        id: `${exercise.id}_alt_glute_bridge`,
+        name: 'Most za gluteus s pauzom na vrhu',
+        croatianName: 'Most za gluteus s 2s zadrške (15 ponavljanja)',
+        sets: exercise.sets,
+        reps: '15 ponavljanja',
+        targetCount: 15,
+        tempo: '2s stisak na vrhu',
+        restSeconds: exercise.restSeconds,
+        description: 'Lezi na leđa, savij koljena. Podiži kukove stišćući gluteuse bez prekomjernog uvijanja donjih leđa.',
+        backFriendlyTip: 'Aktivira gluteus i dekomprimira diskove bez ikakvog zamaranja prsa i ruku.',
+        targetMuscles: ['Gluteus', 'Zadnja loža']
+      }
+    ];
+  }
+
+  // Default alternatives for legs or core
+  return [
+    {
+      id: `${exercise.id}_alt_deadbug`,
+      name: 'Dead Bug (Mrtvi kukac s kontrolom leđa)',
+      croatianName: 'Mrtvi kukac (12 ponavljanja s kontrolom)',
+      sets: exercise.sets,
+      reps: '12 ponavljanja',
+      targetCount: 12,
+      tempo: 'Polagano s 1s zadrške',
+      restSeconds: exercise.restSeconds,
+      description: 'Lezi na leđa, zalijepi donji dio leđa za pod i naizmjenično spuštaj suprotnu ruku i nogu.',
+      backFriendlyTip: 'Zlatni standard za stabilizaciju lumbalnog dijela.',
+      targetMuscles: ['Transversus abdominis', 'Trup']
+    },
+    {
+      id: `${exercise.id}_alt_glute_bridge`,
+      name: 'Most za gluteus s pauzom',
+      croatianName: 'Most za gluteus s 2s zadrške na vrhu',
+      sets: exercise.sets,
+      reps: '15 ponavljanja',
+      targetCount: 15,
+      tempo: '2s stisak na vrhu',
+      restSeconds: exercise.restSeconds,
+      description: 'Podiži kukove stišćući gluteuse, držeći trup čvrstim.',
+      backFriendlyTip: 'Rasterećuje donja leđa.',
+      targetMuscles: ['Gluteus', 'Zadnja loža']
+    }
+  ];
+}
+

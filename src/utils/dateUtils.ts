@@ -13,6 +13,16 @@ export function getZagrebDateString(date: Date = new Date()): string {
   return formatter.format(date);
 }
 
+export function getZagrebYesterdayDateString(currentDateStr: string = getZagrebDateString()): string {
+  const [y, m, d] = currentDateStr.split('-').map(Number);
+  const dateObj = new Date(Date.UTC(y, m - 1, d));
+  dateObj.setUTCDate(dateObj.getUTCDate() - 1);
+  const year = dateObj.getUTCFullYear();
+  const month = (dateObj.getUTCMonth() + 1).toString().padStart(2, '0');
+  const day = dateObj.getUTCDate().toString().padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
 export function getZagrebDateParts(date: Date = new Date()): { year: number; month: number; day: number; hour: number; minute: number; second: number } {
   const formatter = new Intl.DateTimeFormat('en-US', {
     timeZone: 'Europe/Zagreb',

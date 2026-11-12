@@ -90,6 +90,11 @@ export function processWorkoutCompletion(
       if (difficultyFeedback !== 'too_hard') {
         updated.calisthenicsLevel = Math.min(10, updated.calisthenicsLevel + 1);
       }
+    } else if (workoutType === 'emom') {
+      updated.calisthenicsLevel = Math.min(10, updated.calisthenicsLevel + 1);
+      updated.cardioEngineLevel = Math.min(10, (updated.cardioEngineLevel || 1) + 1);
+    } else if (workoutType === 'pyramid') {
+      updated.calisthenicsLevel = Math.min(10, updated.calisthenicsLevel + 1);
     } else if (workoutType === 'animal_flow') {
       updated.animalFlowLevel = Math.min(5, (updated.animalFlowLevel || 1) + 1);
     } else if (workoutType === 'back_bulletproof') {
@@ -119,6 +124,7 @@ export function processWorkoutCompletion(
   checkAndUnlock('badge_back_first_step', updated.backRehabCount >= 1);
   checkAndUnlock('badge_back_master_month', updated.backRehabCount >= 4);
   checkAndUnlock('badge_pushup_centurion', workoutType === 'challenge' && updated.challengePushups >= 100);
+  checkAndUnlock('badge_pyramid_master', workoutType === 'pyramid');
   checkAndUnlock('badge_first_run', workoutType === 'running' && painRating <= 2);
   checkAndUnlock('badge_bjj_mat_flow', workoutType === 'bjj_flow');
   checkAndUnlock('badge_streak_3', updated.currentStreak >= 3);

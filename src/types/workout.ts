@@ -5,6 +5,7 @@ export type WorkoutType =
   | 'back_bulletproof' 
   | 'bjj_flow' 
   | 'emom'
+  | 'pyramid'
   | 'animal_flow'
   | 'tabata'
   | 'isometrics'
@@ -27,6 +28,13 @@ export interface ExerciseItem {
   description: string;      // Detaljan opis izvođenja
   backFriendlyTip: string;  // Specifičan savjet za spondiloartritis i zaštitu kralježnice
   targetMuscles: string[];  // npr. ["Kralježnica", "Kukovi", "Kardio"]
+}
+
+export interface ExerciseReplacement {
+  originalExerciseId: string;
+  originalExerciseName: string;
+  replacementExercise: ExerciseItem;
+  reason: string;
 }
 
 export interface WorkoutSection {
